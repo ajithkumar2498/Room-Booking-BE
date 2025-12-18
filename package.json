@@ -1,0 +1,29 @@
+{
+  "name": "room-booking-app",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jest": "^30.2.0",
+    "moment": "^2.30.1",
+    "nodemon": "^3.1.11",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7",
+    "url": "^0.11.4"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.4"
+  }
+}
