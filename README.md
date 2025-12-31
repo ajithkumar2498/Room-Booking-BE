@@ -1,88 +1,117 @@
 Meeting Room Booking Service
 
-A robust, RESTful API designed to manage meeting room reservations with zero conflicts. Built with Node.js and Express.
+A robust, RESTful API for managing meeting room reservations without conflicts.
 
-Tech Stack
-----------
+Prerequisites
 
-Core: Node.js, Express.js
+Node.js: v14 or higher
 
-Database: SQLite (with Sequelize ORM)
+NPM: v6 or higher
 
-Testing: Jest, Supertest
+🚀 Installation & Setup
 
-Setup & Run
------------
+Clone the repository (if not already downloaded).
 
-Install Dependencies
+Install Dependencies:
+Run the following command in the project root to install required libraries (Express, Sequelize, SQLite3, Jest, etc.):
 
 npm install
 
 
-Start Server
+Environment Setup:
+The application uses a local SQLite database, so no external database setup is required. The database file (database.sqlite) will be created automatically upon the first run.
+
+🏃‍♂️ Running the Application
+
+To start the server in development mode:
 
 npm start
 
 
-The API runs at http://localhost:8000.
+Server URL: http://localhost:3000 (Default)
 
-Run Tests
+Note: If you have configured a PORT environment variable, the URL will change accordingly (e.g., http://localhost:8000).
+
+🧪 Running Tests
+
+The project includes a comprehensive test suite using Jest.
+
+To run all tests:
 
 npm test
 
-Key Features
-------------
 
-Conflict-Free Booking: Automatically prevents double bookings and enforces business hours (Mon-Fri, 08:00–20:00).
+🔌 API Endpoints
 
-Idempotency: Handles network retries safely using the Idempotency-Key header.
+1. Create a Room
 
-Reports: Generates room utilization statistics based on business hours.
+Endpoint: POST /rooms
 
-Layered Architecture: Clean separation of Controllers, Services, and Repositories.
+Description: Adds a new meeting room.
 
-API Quick Reference
+Body:
 
-Method
+{
+  "name": "Boardroom A",
+  "capacity": 10,
+  "floor": 1,
+  "amenities": ["Projector", "WiFi"]
+}
 
-Endpoint
 
-Description
+2. Create a Booking
 
-POST
+Endpoint: POST /bookings
 
-/rooms
+Description: Books a room. Validates business hours (Mon-Fri, 08:00-20:00) and prevents overlaps.
 
-Create a new room
+Headers:
 
-GET
+Idempotency-Key (Optional): Unique string to prevent duplicate bookings on retry.
 
-/rooms
+Body:
 
-List rooms (filter by capacity/amenity)
+{
+  "roomId": 1,
+  "title": "Strategy Meeting",
+  "organizerEmail": "manager@example.com",
+  "startTime": "2025-10-30T10:00:00.000Z",
+  "endTime": "2025-10-30T12:00:00.000Z"
+}
 
-POST
 
-/bookings
+3. List Rooms
 
-Create a booking
+Endpoint: GET /rooms
 
-GET
+Query Params: minCapacity (int), amenity (string)
 
-/bookings
+4. List Bookings
 
-List bookings
+Endpoint: GET /bookings
 
-POST
+Query Params: roomId, start_from, end_to
 
-/bookings/:id/cancel
+5. Cancel Booking
 
-Cancel a booking
+Endpoint: POST /bookings/:id/cancel
 
-GET
+6. Utilization Report
 
-/reports/room-utilization
+Endpoint: GET /reports/room-utilization
 
-Get utilization stats
+Query Params: from (ISO Date), to (ISO Date)
 
-Built for the HCL GUVI x Everquint FSD Task.
+📂 Project Structure
+
+├── src/
+│   ├── config/         # Database configuration
+│   ├── controllers/    # Request handling logic
+│   ├── models/         # Sequelize database models
+│   ├── repositories/   # Direct database access layer
+│   ├── routes/         # API route definitions
+│   ├── services/       # Business logic (Validation, Calculations)
+│   └── index.js          # Entry point
+├── tests/              # Integration tests
+├── package.json
+└── README.md
