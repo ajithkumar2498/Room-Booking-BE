@@ -1,6 +1,6 @@
-System Design: Meeting Room Booking Service
+> System Design: Meeting Room Booking Service
 
-1. Architecture Overview
+**1. Architecture Overview**
 
 The application follows a Layered Architecture (Controller-Service-Repository) to ensure separation of concerns, testability, and maintainability.
 
@@ -12,7 +12,7 @@ Repositories (src/repositories): Abstract the database layer. All Sequelize/SQL 
 
 Models (src/models): Define the database schema using Sequelize.
 
-2. Data Model
+**2. Data Model**
 
 We use SQLite with Sequelize ORM for data persistence.
 
@@ -56,7 +56,7 @@ responseBody: Text (JSON).
 
 locked: Integer (1 = processing, 0 = complete).
 
-3. Algorithm: preventing Overlaps
+**3. Algorithm: preventing Overlaps**
 
 To ensure no two bookings occupy the same room at the same time, we perform a database check before insertion.
 
@@ -73,7 +73,7 @@ We use Sequelize operators Op.lt (less than) and Op.gt (greater than).
 
 If any record is found, the service throws a 409 Conflict error immediately.
 
-4. Idempotency & Concurrency
+**4. Idempotency & Concurrency**
 
 Idempotency
 
@@ -81,7 +81,7 @@ To handle network retries safely (e.g., a client sends the same booking request 
 
 Check: When a request arrives, we check the IdempotencyKeys table.
 
-Hit:
+Hint:
 
 If locked=1 (Processing): Return 409 Conflict (Concurrent request).
 
@@ -97,7 +97,7 @@ Database Constraints: The IdempotencyKey.key is a Primary Key. If two parallel r
 
 Isolation: For booking overlaps, strict ACID transactions would be used in a production environment (e.g., PostgreSQL SERIALIZABLE isolation). In this SQLite implementation, the atomic nature of the single-threaded Node.js event loop + await calls provides sufficient safety for the scope of this assignment.
 
-5. Utilization Report Calculation
+**5. Utilization Report Calculation**
 
 The goal is to calculate the percentage of time a room is booked during business hours.
 
@@ -124,7 +124,7 @@ We fetch all bookings overlapping the requested range.
 
 We clip the booking duration. For example, if a booking is from 09:00 to 11:00, but the report is requested starting at 10:00, only 1 hour (10:00-11:00) is counted.
 
-6. Error Handling Strategy
+**6. Error Handling Strategy**
 
 We adhere to a consistent error response format to make API consumption predictable.
 
