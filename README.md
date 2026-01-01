@@ -1,117 +1,106 @@
-Meeting Room Booking Service
+Meeting Room Booking Service 📅
 
-A robust, RESTful API for managing meeting room reservations without conflicts.
+A robust, RESTful API designed to manage meeting room reservations efficiently. It features strict conflict prevention, idempotency support, and utilization reporting, built with Node.js, Express, and SQLite.
 
-Prerequisites
+🚀 Features
+
+Conflict-Free Booking: Enforces strict "No Overlap" checks using database queries before confirmation.
+
+Business Rules: Validates booking duration (15m–4h) and operating hours (Mon–Fri, 08:00–20:00).
+
+Idempotency: Handles network retries safely via Idempotency-Key headers to prevent duplicate bookings.
+
+Utilization Reporting: Calculates room usage statistics based on effective business hours.
+
+Layered Architecture: Clean separation of concerns (Controllers ↔ Services ↔ Repositories).
+
+📋 Prerequisites
 
 Node.js: v14 or higher
 
 NPM: v6 or higher
 
-🚀 Installation & Setup
+🛠️ Installation & Setup
 
-Clone the repository (if not already downloaded).
+Clone the repository:
+
+git clone <repository-url>
+cd meeting-room-booking
+
 
 Install Dependencies:
-Run the following command in the project root to install required libraries (Express, Sequelize, SQLite3, Jest, etc.):
 
 npm install
 
 
-Environment Setup:
-The application uses a local SQLite database, so no external database setup is required. The database file (database.sqlite) will be created automatically upon the first run.
+Database:
+The application uses SQLite. The database file (database.sqlite) is automatically created in the root directory upon the first launch. No external configuration is required.
 
 🏃‍♂️ Running the Application
 
-To start the server in development mode:
+Development Mode (Auto-Reload)
+
+Starts the server using Nodemon, which restarts automatically on file changes.
+
+npm run dev
+
+
+Production / Standard Start
+
+Starts the server using standard Node.js.
 
 npm start
 
 
 Server URL: http://localhost:3000 (Default)
 
-Note: If you have configured a PORT environment variable, the URL will change accordingly (e.g., http://localhost:8000).
+Note: Port can be configured via the PORT environment variable.
 
 🧪 Running Tests
 
-The project includes a comprehensive test suite using Jest.
-
-To run all tests:
+The project includes a comprehensive integration test suite using Jest and Supertest.
 
 npm test
 
 
-🔌 API Endpoints
+🔌 API Reference
 
-1. Create a Room
+1. Rooms
 
-Endpoint: POST /rooms
+POST /rooms: Create a new meeting room.
 
-Description: Adds a new meeting room.
+GET /rooms: List rooms (supports filtering by minCapacity and amenity).
 
-Body:
+2. Bookings
 
-{
-  "name": "Boardroom A",
-  "capacity": 10,
-  "floor": 1,
-  "amenities": ["Projector", "WiFi"]
-}
+POST /bookings: Create a booking.
 
+Headers: Idempotency-Key (Optional unique string).
 
-2. Create a Booking
+Body: roomId, title, organizerEmail, startTime, endTime.
 
-Endpoint: POST /bookings
+GET /bookings: List bookings (filter by roomId or date range).
 
-Description: Books a room. Validates business hours (Mon-Fri, 08:00-20:00) and prevents overlaps.
+POST /bookings/:id/cancel: Cancel an existing booking.
 
-Headers:
+3. Reports
 
-Idempotency-Key (Optional): Unique string to prevent duplicate bookings on retry.
+GET /reports/room-utilization: Get utilization stats (percentage of time booked vs. available business hours).
 
-Body:
-
-{
-  "roomId": 1,
-  "title": "Strategy Meeting",
-  "organizerEmail": "manager@example.com",
-  "startTime": "2025-10-30T10:00:00.000Z",
-  "endTime": "2025-10-30T12:00:00.000Z"
-}
-
-
-3. List Rooms
-
-Endpoint: GET /rooms
-
-Query Params: minCapacity (int), amenity (string)
-
-4. List Bookings
-
-Endpoint: GET /bookings
-
-Query Params: roomId, start_from, end_to
-
-5. Cancel Booking
-
-Endpoint: POST /bookings/:id/cancel
-
-6. Utilization Report
-
-Endpoint: GET /reports/room-utilization
-
-Query Params: from (ISO Date), to (ISO Date)
+Query: from (ISO Date), to (ISO Date).
 
 📂 Project Structure
 
-├── src/
-│   ├── config/         # Database configuration
-│   ├── controllers/    # Request handling logic
-│   ├── models/         # Sequelize database models
-│   ├── repositories/   # Direct database access layer
-│   ├── routes/         # API route definitions
-│   ├── services/       # Business logic (Validation, Calculations)
-│   └── index.js          # Entry point
-├── tests/              # Integration tests
-├── package.json
-└── README.md
+src/
+├── config/         # Database connection setup
+├── controllers/    # Request handling and response formatting
+├── services/       # Business logic (Validation, Overlap checks)
+├── repositories/   # Database queries (Sequelize)
+├── models/         # Database Schema Definitions
+├── routes/         # API Route definitions
+└── index.js        # App entry point
+
+
+📐 System Design
+
+For a deep dive into the architectural decisions, concurrency handling, and algorithms used (like the utilization formula), please refer to the DESIGN.md file.

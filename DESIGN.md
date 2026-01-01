@@ -1,26 +1,40 @@
 System Design: Meeting Room Booking Service
 
-1. Data Model
+1. Architecture Overview
 
-The application uses a relational database (SQLite) accessed via Sequelize ORM.
+The application follows a Layered Architecture (Controller-Service-Repository) to ensure separation of concerns, testability, and maintainability.
+
+Controllers (src/controllers): Handle HTTP requests, parse inputs, and send responses. No business logic resides here.
+
+Services (src/services): Contain the core business logic (e.g., validation rules, utilization calculations, overlap checks).
+
+Repositories (src/repositories): Abstract the database layer. All Sequelize/SQL queries are isolated here.
+
+Models (src/models): Define the database schema using Sequelize.
+
+2. Data Model
+
+We use SQLite with Sequelize ORM for data persistence.
+
+Entities
 
 Room
 
-id (PK): Integer, Auto-increment.
+id (PK): Auto-increment Integer.
 
-name: String, Unique.
+name: String (Unique).
 
 capacity: Integer.
 
 floor: Integer.
 
-amenities: String (Stored as JSON array string).
+amenities: String (Stored as a JSON-stringified array for SQLite compatibility).
 
 Booking
 
-id (PK): Integer.
+id (PK): Auto-increment Integer.
 
-roomId (FK): References Room.
+roomId (FK): Links to Room.
 
 title: String.
 
@@ -36,75 +50,93 @@ IdempotencyKey
 
 key: String (PK).
 
-responseCode: Integer (HTTP Status).
+responseCode: Integer.
 
-responseBody: Text (JSON string of the response).
+responseBody: Text (JSON).
 
 locked: Integer (1 = processing, 0 = complete).
 
-2. Preventing Overlaps
+3. Algorithm: preventing Overlaps
 
-We enforce a strict "No Overlap" policy using a time-range intersection check before any booking insertion.
+To ensure no two bookings occupy the same room at the same time, we perform a database check before insertion.
 
 Logic:
-A new booking $(Start_{new}, End_{new})$ conflicts with an existing booking $(Start_{exist}, End_{exist})$ if:
-
+A new booking request $(Start_{new}, End_{new})$ overlaps with an existing confirmed booking $(Start_{exist}, End_{exist})$ if:
 
 $$Start_{new} < End_{exist} \quad \text{AND} \quad End_{new} > Start_{exist}$$
 
-This query is executed against the database for the specific roomId. If any confirmed record is found, the system immediately aborts with a 409 Conflict error.
+Implementation:
 
-3. Error Handling Strategy
+This query is executed in bookingRepository.js.
 
-The application uses a Centralized Error Handling middleware pattern in Express.js.
+We use Sequelize operators Op.lt (less than) and Op.gt (greater than).
 
-Throwing Errors: Services throw standard JavaScript Error objects attached with a custom statusCode property (e.g., err.statusCode = 404).
+If any record is found, the service throws a 409 Conflict error immediately.
 
-Catching Errors: Controllers wrap logic in try/catch blocks and pass errors to next(err).
+4. Idempotency & Concurrency
 
-Formatting: The global middleware intercepts these errors and formats a consistent JSON response:
+Idempotency
 
-{
-  "error": "ValidationError",
-  "message": "Specific details about what went wrong"
-}
+To handle network retries safely (e.g., a client sends the same booking request twice due to a timeout), we use the Idempotency-Key header.
 
+Check: When a request arrives, we check the IdempotencyKeys table.
 
-4. Idempotency Implementation
+Hit:
 
-To ensure network retries do not create duplicate bookings, clients can send a custom Idempotency-Key header.
+If locked=1 (Processing): Return 409 Conflict (Concurrent request).
 
-Flow:
+If locked=0 (Complete): Return the cached response immediately without re-processing logic.
 
-Check: Middleware checks the database for the key.
+Miss: Create a new key record with locked=1 and proceed to create the booking.
 
-Found & Locked: Request is currently processing. Return 409 Conflict.
+Save: Once the booking is created, update the key record with the response body and set locked=0.
 
-Found & Unlocked: Request previously succeeded. Return the cached responseBody and statusCode.
+Concurrency
 
-Lock: If the key is new, a record is inserted with locked=1.
+Database Constraints: The IdempotencyKey.key is a Primary Key. If two parallel requests try to insert the same key, the database throws a constraint violation, ensuring only one proceeds.
 
-Process: The booking logic executes.
+Isolation: For booking overlaps, strict ACID transactions would be used in a production environment (e.g., PostgreSQL SERIALIZABLE isolation). In this SQLite implementation, the atomic nature of the single-threaded Node.js event loop + await calls provides sufficient safety for the scope of this assignment.
 
-Save: On completion, the record is updated with the result and locked=0.
+5. Utilization Report Calculation
 
-5. Concurrency Handling
-
-Idempotency Locks: The database unique constraint on the IdempotencyKey table acts as a concurrency lock. If two requests with the same key arrive simultaneously, the database rejects the second insertion, preventing duplicate processing.
-
-Booking Integrity: While the current implementation uses a "Check-Then-Act" logic in the application layer, production environments would rely on database transaction isolation levels (Serializable) or Exclusion Constraints (PostgreSQL) to strictly guarantee no race conditions occur between the overlap check and the insertion.
-
-6. Utilization Calculation
-
-The utilization report calculates how efficiently rooms are used during business hours.
+The goal is to calculate the percentage of time a room is booked during business hours.
 
 Formula:
-$$ \text{Utilization} = \frac{\text{Total Duration of Confirmed Bookings (in range)}}{\text{Total Business Hours Available (in range)}} $$
+
+
+$$\text{Utilization} = \frac{\text{Total Duration of Bookings (in range)}}{\text{Total Business Hours (in range)}}$$
 
 Assumptions & Logic:
 
-Business Hours: Strictly Monday–Friday, 08:00 to 20:00 (12 hours/day).
+Business Hours: Fixed at Monday–Friday, 08:00 to 20:00 (12 hours/day).
 
-Range Clipping: If a user requests a report from 10:00 to 11:00, only the booking time falling within that specific window contributes to the numerator.
+Range Clipping:
 
-Denominator: The system iterates through the requested date range, summing up 12 hours for every weekday found, excluding weekends.
+The calculation iterates through every day in the requested from - to range.
+
+Weekends (Sat/Sun) contribute 0 hours to the denominator.
+
+Weekdays contribute up to 12 hours.
+
+Booking Intersection:
+
+We fetch all bookings overlapping the requested range.
+
+We clip the booking duration. For example, if a booking is from 09:00 to 11:00, but the report is requested starting at 10:00, only 1 hour (10:00-11:00) is counted.
+
+6. Error Handling Strategy
+
+We adhere to a consistent error response format to make API consumption predictable.
+
+Service Layer: Throws JavaScript Error objects with a custom statusCode property (e.g., error.statusCode = 404).
+
+Controller Layer: Catches errors and passes them to the Express next() function.
+
+Global Middleware: A centralized error handler in src/index.js formats the final JSON:
+
+```
+{
+  "error": "ValidationError", // or InternalServerError, etc.
+  "message": "startTime must be strictly before endTime"
+}
+```
