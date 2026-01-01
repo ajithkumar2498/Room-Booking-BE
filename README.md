@@ -24,13 +24,19 @@ NPM: v6 or higher
 
 Clone the repository:
 
-`git clone` https://github.com/ajithkumar2498/Room-Booking-BE.git
+``` 
+git clone https://github.com/ajithkumar2498/Room-Booking-BE.git
+```
 
-`cd meeting-room-booking`
+```
+cd meeting-room-booking
+```
 
 **Install Dependencies:**
 
-`npm install`
+```
+npm install
+```
 
 
 **Database:**
@@ -42,14 +48,18 @@ Development Mode (Auto-Reload)
 
 Starts the server using Nodemon, which restarts automatically on file changes.
 
-`npm run dev`
+```
+npm run dev
+```
 
 
 **Production / Standard Start**
 
 Starts the server using standard Node.js.
 
-`npm start`
+```
+npm start
+```
 
 
 **Server URL:** http://localhost:3000 (Default)
@@ -60,7 +70,9 @@ Note: Port can be configured via the PORT environment variable.
 
 The project includes a comprehensive integration test suite using Jest and Supertest.
 
-`npm test`
+```
+npm test
+```
 
 
 🔌 **API Reference**
@@ -91,21 +103,21 @@ Query: from (ISO Date), to (ISO Date).
 
 📂 **Project Structure**
 
-`src/
+src/
 
-├── config/         # Database connection setup
+`├── config/         # Database connection setup`
 
-├── controllers/    # Request handling and response formatting
+`├── controllers/    # Request handling and response formatting`
 
-├── services/       # Business logic (Validation, Overlap checks)
+`├── services/       # Business logic (Validation, Overlap checks)`
 
-├── repositories/   # Database queries (Sequelize)
+`├── repositories/   # Database queries (Sequelize)`
 
-├── models/         # Database Schema Definitions
+`├── models/         # Database Schema Definitions`
 
-├── routes/         # API Route definitions
+`├── routes/         # API Route definitions`
 
-└── index.js        # App entry point`
+`└── index.js        # App entry point`
 
 
 📐 **System Design**
