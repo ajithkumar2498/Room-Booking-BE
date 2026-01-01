@@ -10,7 +10,7 @@ const isValidEmail = (email) => {
 };
 
 export const createBooking = async (data) => {
-  console.log("CreateBooking Service received:", data);
+  // console.log("CreateBooking Service received:", data);
 
   if (!data) {
     const err = new Error("Request body is empty");
@@ -21,11 +21,28 @@ export const createBooking = async (data) => {
   // 1. Destructure & Check Existence of all required fields
   const { roomId, title, organizerEmail, startTime, endTime } = data;
 
+const error = new Error(
+  !isValidEmail
+    ? "Please provide a valid email"
+    : "Valid organizerEmail is required"
+);
+
+
   if (!roomId) throw { statusCode: 400, message: "roomId is required" };
   if (!title || title.trim() === "")
     throw { statusCode: 400, message: "Booking title is required" };
-  if (!organizerEmail || !isValidEmail(organizerEmail))
-    throw { statusCode: 400, message: "Valid organizerEmail is required" };
+  if (!organizerEmail) {
+  throw {
+    statusCode: 400,
+    message: "Organizer Email ID is required"
+  };
+}
+if (!isValidEmail(organizerEmail)) {
+  throw {
+    statusCode: 400,
+    message: "Please provide a valid email"
+  };
+}
   if (!startTime || !endTime)
     throw { statusCode: 400, message: "startTime and endTime are required" };
 

@@ -17,13 +17,13 @@ sequelize.sync()
 //Routes
 app.use('/', routes)
 
-app.use((error, req, res, next)=>{
-  const status = error.statusCode || 500;
-  res.status(status).json({
-    error: status === 500 ? 'InternalServerError' : 'ValidateError',
-    message: error.message
-  })
-})
+app.use((err, req, res, next) => {
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error"
+  });
+});
+
 
 app.get('/', (req, res) => {
   res.send(' API is running...');
